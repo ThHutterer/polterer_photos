@@ -1,8 +1,11 @@
 import streamlit as st
 import os
 from supabase import create_client, Client
+
 from datetime import datetime
 import hashlib
+import io
+import zipfile
 
 from dotenv import load_dotenv
 
@@ -132,8 +135,12 @@ with tab2:
         else:
             st.write(f"**{len(files)} Fotos**")
             
+
             # Grid Layout (3 Spalten)
             cols = st.columns(3)
+            
+            # Liste für ausgewählte Dateien
+            selected_files = []
             
             for idx, file in enumerate(files):
                 with cols[idx % 3]:
@@ -143,9 +150,47 @@ with tab2:
                     # Thumbnail anzeigen
                     st.image(public_url, use_container_width=True)
                     
+                    # Checkbox für Auswahl
+                    if st.checkbox("Auswählen", key=f"select_{file['name']}"):
+                        selected_files.append(file)
+
                     # Dateiname und Download
                     st.caption(f"📷 {file['name']}")
                     st.markdown(f"[⬇️ Download]({public_url})")
+
+            # Bulk Download Section
+            if selected_files:
+                st.markdown("---")
+                st.subheader(f"📥 {len(selected_files)} Fotos ausgewählt")
+                
+                # Button zum Erstellen des ZIPs
+                if st.button("📦 ZIP-Datei erstellen"):
+                    with st.spinner("ZIP-Datei wird erstellt... (das kann kurz dauern)"):
+                        # In-Memory ZIP erstellen
+                        zip_buffer = io.BytesIO()
+                        
+                        try:
+                            with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+                                for file in selected_files:
+                                    # Datei von Supabase herunterladen
+                                    file_data = supabase.storage.from_(BUCKET_NAME).download(file["name"])
+                                    # Zur ZIP hinzufügen
+                                    zip_file.writestr(file["name"], file_data)
+                            
+                            # Pointer zurücksetzen
+                            zip_buffer.seek(0)
+                            
+                            # Download Button anzeigen
+                            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                            st.download_button(
+                                label="💾 ZIP herunterladen",
+                                data=zip_buffer,
+                                file_name=f"polterer_photos_{timestamp}.zip",
+                                mime="application/zip"
+                            )
+                            
+                        except Exception as e:
+                            st.error(f"Fehler beim Erstellen des ZIPs: {str(e)}")
     
     except Exception as e:
         st.error(f"❌ Fehler beim Laden der Galerie: {str(e)}")
