@@ -65,17 +65,17 @@ if UPLOAD_PIN and not st.session_state.pin_verified:
 tab1, tab2 = st.tabs(["📤 Upload", "🖼️ Galerie"])
 
 with tab1:
-    st.subheader("Fotos hochladen")
+    st.subheader("Fotos & Videos hochladen")
     
     # Uploader Name (optional)
     uploader_name = st.text_input("Dein Name (optional):", placeholder="z.B. Anna")
     
     # File uploader
     uploaded_files = st.file_uploader(
-        "Wähle Fotos aus:",
-        type=["jpg", "jpeg", "png", "heic", "heif"],
+        "Wähle Dateien aus:",
+        type=["jpg", "jpeg", "png", "heic", "heif", "mp4", "mov", "avi", "mkv"],
         accept_multiple_files=True,
-        help="Du kannst mehrere Fotos gleichzeitig auswählen"
+        help="Du kannst mehrere Fotos und Videos gleichzeitig auswählen"
     )
     
     if uploaded_files:
@@ -120,7 +120,7 @@ with tab1:
                 
                 progress_bar.progress((idx + 1) / total)
             
-            st.success(f"🎉 {success_count} von {total} Fotos erfolgreich hochgeladen!")
+            st.success(f"🎉 {success_count} von {total} Dateien erfolgreich hochgeladen!")
             st.balloons()
 
 with tab2:
@@ -131,10 +131,23 @@ with tab2:
         files = supabase.storage.from_(BUCKET_NAME).list()
         
         if not files:
-            st.info("📭 Noch keine Fotos hochgeladen.")
+            st.info("📭 Noch keine Dateien hochgeladen.")
         else:
-            st.write(f"**{len(files)} Fotos**")
+            st.write(f"**{len(files)} Dateien**")
             
+            # Select/Deselect All Buttons
+            col_actions, _ = st.columns([1, 2])
+            with col_actions:
+                c1, c2 = st.columns(2)
+                if c1.button("✅ Alle auswählen"):
+                    for file in files:
+                        st.session_state[f"select_{file['name']}"] = True
+                    st.rerun()
+                    
+                if c2.button("❌ Auswahl aufheben"):
+                    for file in files:
+                        st.session_state[f"select_{file['name']}"] = False
+                    st.rerun()
 
             # Grid Layout (3 Spalten)
             cols = st.columns(3)
@@ -147,8 +160,12 @@ with tab2:
                     # Public URL generieren
                     public_url = supabase.storage.from_(BUCKET_NAME).get_public_url(file["name"])
                     
-                    # Thumbnail anzeigen
-                    st.image(public_url, use_container_width=True)
+                    # Media anzeigen (Video oder Bild)
+                    file_ext = file["name"].split(".")[-1].lower()
+                    if file_ext in ["mp4", "mov", "avi", "mkv"]:
+                        st.video(public_url)
+                    else:
+                        st.image(public_url, use_container_width=True)
                     
                     # Checkbox für Auswahl
                     if st.checkbox("Auswählen", key=f"select_{file['name']}"):
