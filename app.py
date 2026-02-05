@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Konfiguration
-SUPABASE_URL = os.getenv("SUPABASE_URL")
+L = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 UPLOAD_PIN = os.getenv("UPLOAD_PIN", "")  # Optional: PIN für Upload-Schutz
 BUCKET_NAME = "polterer-photos"
