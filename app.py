@@ -73,7 +73,7 @@ with tab1:
     # File uploader
     uploaded_files = st.file_uploader(
         "Wähle Dateien aus:",
-        type=["jpg", "jpeg", "png", "heic", "heif", "mp4", "mov", "avi", "mkv"],
+        type=["jpg", "jpeg", "png", "heic", "heif", "mp4", "mov", "avi", "mkv", "mpg", "mpeg"],
         accept_multiple_files=True,
         help="Du kannst mehrere Fotos und Videos gleichzeitig auswählen"
     )
@@ -162,7 +162,7 @@ with tab2:
                     
                     # Media anzeigen (Video oder Bild)
                     file_ext = file["name"].split(".")[-1].lower()
-                    if file_ext in ["mp4", "mov", "avi", "mkv"]:
+                    if file_ext in ["mp4", "mov", "avi", "mkv", "mpg", "mpeg"]:
                         st.video(public_url)
                     else:
                         st.image(public_url, use_container_width=True)
